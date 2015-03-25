@@ -5,8 +5,8 @@
  Receives from software serial, sends to hardware serial.
  
  The circuit: 
- * RX is digital pin 10 (connect to TX of other device)
- * TX is digital pin 11 (connect to RX of other device)
+ * RX is digital pin 10 (connect to TX of other device) (50)
+ * TX is digital pin 11 (connect to RX of other device) (51)
  
  Note:
  Not all pins on the Mega and Mega 2560 support change interrupts, 
@@ -26,6 +26,7 @@
  
  */
 #include <SoftwareSerial.h>
+#include "mojo-coms.h"
 
 SoftwareSerial mySerial(10, 11); // RX, TX
 
