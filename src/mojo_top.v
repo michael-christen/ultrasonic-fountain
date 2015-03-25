@@ -23,6 +23,11 @@ module mojo_top(
 	 //Serial
 	 output ext_tx, //FPGA Tx
 	 input  ext_rx, //FPGA Rx 
+	 //Spi
+	 output ext_miso, //35
+	 input  ext_mosi, //34
+	 input  ext_ss,   //40
+	 input  ext_sck, //41
 	 
 	 input echo, //ultrasonic received dur.
 	 output trigger //ultrasonic start
@@ -38,8 +43,7 @@ assign spi_channel = 4'bzzzz;
 
 //assign led = 8'b10001011;
 reg [7:0] status_out;
-assign led = dist[15:8];
-
+assign led = ext_spi_receive_data;
 wire [7:0] tx_data;
 wire new_tx_data;
 wire tx_busy;
@@ -54,8 +58,14 @@ assign measure_dist = 1'b1;
 wire dist_valid;
 
 always @(*) begin
-	if(new_rx_data)
+	if(new_rx_data) begin
 		status_out = dist[7:0];
+	end
+	/*
+	if(ext_spi_done) begin
+		ext_spi_send_data = ext_spi_receive_data;
+	end
+	*/
 end
 
 wire clk_10us;
@@ -77,6 +87,26 @@ hcsr04 #(
 	 .ticks(dist),
 	 .valid(dist_valid),
 	 .trigger(trigger));
+
+wire ext_spi_done;
+wire [7:0] ext_spi_receive_data;
+wire  [7:0] ext_spi_send_data;
+assign ext_spi_send_data = "h";
+
+spi_slave external_spi (
+	.clk(clk),
+	.rst(rst),
+
+	.ss(ext_ss),
+	.mosi(ext_mosi),
+	.miso(ext_miso),
+	.sck(ext_sck),
+
+	.done(ext_spi_done),
+	.din(ext_spi_send_data),
+	.dout(ext_spi_receive_data)
+);
+
 
 serial_interface #(.SERIAL_BAUD_RATE(SERIAL_BAUD_RATE)) connector (
 	 .clk(clk),
