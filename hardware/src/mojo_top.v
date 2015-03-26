@@ -33,7 +33,7 @@ module mojo_top(
 	 output trigger //ultrasonic start
     );
 	 
-parameter SERIAL_BAUD_RATE=57600;
+parameter SERIAL_BAUD_RATE=9600;
 
 wire rst = ~rst_n; // make reset active high
 // these signals should be high-z when not used
@@ -43,7 +43,9 @@ assign spi_channel = 4'bzzzz;
 
 //assign led = 8'b10001011;
 reg [7:0] status_out;
-assign led = ext_spi_receive_data;
+/*
+assign led = rx_data;
+
 wire [7:0] tx_data;
 wire new_tx_data;
 wire tx_busy;
@@ -51,21 +53,16 @@ wire [7:0] rx_data;
 wire new_rx_data;
 wire srl_block;
 assign srl_block = 1'b0;
-
+*/
 wire measure_dist;
 wire [15:0] dist;
 assign measure_dist = 1'b1;
 wire dist_valid;
 
 always @(*) begin
-	if(new_rx_data) begin
-		status_out = dist[7:0];
-	end
-	/*
 	if(ext_spi_done) begin
 		ext_spi_send_data = ext_spi_receive_data;
 	end
-	*/
 end
 
 wire clk_10us;
@@ -90,9 +87,7 @@ hcsr04 #(
 
 wire ext_spi_done;
 wire [7:0] ext_spi_receive_data;
-wire  [7:0] ext_spi_send_data;
-assign ext_spi_send_data = "h";
-
+reg  [7:0] ext_spi_send_data;
 spi_slave external_spi (
 	.clk(clk),
 	.rst(rst),
@@ -106,8 +101,25 @@ spi_slave external_spi (
 	.din(ext_spi_send_data),
 	.dout(ext_spi_receive_data)
 );
+wire [7:0] mojo_com_rx_arr [255:0];
+reg [7:0] mojo_com_tx_arr [255:0];
+wire mojo_com_rx_busy, mojo_com_new_rx, mojo_com_rx_busy;
+mojo_com #(
+	.SERIAL_BAUD_RATE(SERIAL_BAUD_RATE))
+ com_unit(
+	.clk(clk),
+	.rst(rst),
+	.tx(ext_tx),
+	.rx(ext_rx),
+	.rx_arr(mojo_com_rx_arr),
+	.rx_busy(mojo_com_rx_busy),
+	.new_rx(mojo_com_new_rx),
+	.tx_arr(mojo_com_tx_arr),
+	.tx_busy(mojo_com_tx_busy)
+);
+	
 
-
+/*
 serial_interface #(.SERIAL_BAUD_RATE(SERIAL_BAUD_RATE)) connector (
 	 .clk(clk),
 	 .rst(rst),
@@ -131,6 +143,7 @@ message_printer helloWorldPrinter (
     .rx_data(rx_data),
     .new_rx_data(new_rx_data)
 );
+*/
 
 
 endmodule
