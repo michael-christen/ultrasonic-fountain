@@ -68,8 +68,7 @@ localparam SERIAL_BAUD_RATE=9600;
 localparam ADDR_SPACE = 256;
 wire [8*ADDR_SPACE -1:0] mojo_com_rx_arr;
 wire [8*ADDR_SPACE -1:0] mojo_com_tx_arr;
-assign mojo_com_tx_arr = {8'h01,8'hde,8'had,8'hbe,8'hef,
-{251{8'hdd}}};
+assign mojo_com_tx_arr = {2008'd0,8'h01,8'hde,8'had,8'hbe,8'hef};
 wire mojo_com_rx_busy, mojo_com_new_rx, mojo_com_tx_busy;
 mojo_com #(
 	.SERIAL_BAUD_RATE(SERIAL_BAUD_RATE))
