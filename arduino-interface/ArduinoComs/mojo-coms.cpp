@@ -15,7 +15,7 @@
 void send_txn_command(SoftwareSerial s, bool write, uint8_t addr, uint8_t n) {
 	//Clear spot for write
 	n &= ~(1 << 7);
-	n |= write ? 0 : (1 << 7);
+	n |= write ? (1 << 7) : 0;
 	s.write(n);
 	s.write(addr);
 }
