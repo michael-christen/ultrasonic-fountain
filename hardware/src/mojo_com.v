@@ -8,10 +8,10 @@ module mojo_com #(
 	output tx,
 	input  rx,
 	//Interface, doesn't guarantee atomicity
-	output reg [7:0] rx_arr [ADDR_SPACE-1:0],
+	output reg [8*ADDR_SPACE-1:0] rx_arr,
 	output rx_busy,
 	output new_rx,
-	input  [7:0] tx_arr [ADDR_SPACE-1:0],
+	input [8*ADDR_SPACE-1:0] tx_arr,
 	output tx_busy
 );
 
@@ -53,7 +53,7 @@ reg [STATE_SIZE - 1:0] state_d, state_q;
 //FSM inputs and parameters
 reg write_q, write_d; //Is this a write
 reg [7:0] addr_q, addr_d, end_addr_q, end_addr_d; //End addr is last to access
-reg [6:0] len;//temp variable to compute end_addr from addr
+reg [6:0] len_q, len_d;//temp variable to compute end_addr from addr
 
 always @(*) begin
 	state_d    = state_q;
@@ -65,6 +65,7 @@ always @(*) begin
 	tx_busy_d = tx_busy_q;
 	new_rx_d  = 0;
 	//Serial comms
+	ser_tx_data = 0;
 	ser_new_tx_data = 0;
 
 
@@ -72,7 +73,7 @@ always @(*) begin
 		IDLE: begin
 			if(ser_new_rx_data) begin
 				write_d = ser_rx_data[7];
-				len     = ser_rx_data[6:0]-1;
+				len     = ser_rx_data[6:0]- 7'd1;
 				//TODO:len 0 could mess stuff up
 				if(ser_rx_data[6:0] == 0) begin
 					state_d = IDLE;
@@ -96,8 +97,8 @@ always @(*) begin
 		end
 		RECEIVE: begin
 			if(ser_new_rx_data) begin
-				rx_arr[addr_d] = ser_rx_data;//TODO, might need reg
-				if(addr_d == end_addr_q) begin
+				rx_arr[addr_q+:8] = ser_rx_data;//TODO, might need reg
+				if(addr_q == end_addr_q) begin
 					new_rx_d  = 1;
 					rx_busy_d = 0;
 					state_d   = IDLE;
@@ -107,9 +108,9 @@ always @(*) begin
 		end
 		SEND: begin
 			if(~ser_tx_busy) begin
-				ser_tx_data = tx_arr[addr_d];
+				ser_tx_data = tx_arr[addr_q+:8];
 				ser_new_tx_data = 1;
-				if(addr_d == end_addr_q) begin
+				if(addr_q == end_addr_q) begin
 					tx_busy_d = 0;
 					state_d = IDLE;
 				end
@@ -123,8 +124,21 @@ end
 always @(posedge clk) begin
 	if(rst) begin
 		state_q <= IDLE;
+		write_q <= 0;
+		addr_q  <= 0;
+		end_addr_q  <= 0;
+		rx_busy_q <= 0;
+		tx_busy_q <= 0;
+		new_rx_q  <= 0;
 	end else begin
 		state_q <= state_d;
+		write_q <= write_d;
+		addr_q  <= addr_d;
+		end_addr_q  <= end_addr_d;
+
+		rx_busy_q <= rx_busy_d;
+		tx_busy_q <= tx_busy_d;
+		new_rx_q  <= new_rx_d;
 	end
 end
 
