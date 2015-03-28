@@ -15,10 +15,20 @@ module mojo_com_logic #(
 	output new_rx,
 	input [8*ADDR_SPACE-1:0] tx_arr,
 	output tx_busy
+	//DEBUG params
+	, output [ADDR_BIT_COUNT - 1:0] cur_addr,
+	output [ADDR_BIT_COUNT - 1:0] end_addr,
+	output [STATE_SIZE - 1:0] cur_state
 );
+parameter WORD_SIZE = 8;
+parameter ADDR_BITS = ADDR_SPACE * 8; //Number of bits in addressable arrs
+parameter ADDR_BIT_COUNT = $clog2(ADDR_BITS); //Number of bits to address all bits
+assign cur_addr = addr_q;
+assign end_addr = end_addr_q;
+assign cur_state = state_q;
 
 //Interface setup
-reg [8*ADDR_SPACE-1:0] rx_arr_q, rx_arr_d;
+reg [ADDR_BITS-1:0] rx_arr_q, rx_arr_d;
 reg rx_busy_q, rx_busy_d, tx_busy_q, tx_busy_d, new_rx_q, new_rx_d;
 assign rx_arr = rx_arr_q;
 assign rx_busy = rx_busy_q;
@@ -26,12 +36,12 @@ assign new_rx  = new_rx_q;
 assign tx_busy = tx_busy_q;
 
 //Serial setup
-reg [7:0] ser_tx_data_q, ser_tx_data_d;
+reg [WORD_SIZE-1:0] ser_tx_data_q, ser_tx_data_d;
 reg ser_new_tx_data_q, ser_new_tx_data_d;
 assign ser_tx_data = ser_tx_data_q;
 assign ser_new_tx_data = ser_new_tx_data_q;
 wire ser_tx_busy;
-wire [7:0] ser_rx_data;
+wire [WORD_SIZE-1:0] ser_rx_data;
 wire ser_new_rx_data;
 
 //FSM setup
@@ -44,8 +54,8 @@ reg [STATE_SIZE - 1:0] state_d, state_q;
 
 //FSM inputs and parameters
 reg write_q, write_d; //Is this a write
-reg [7:0] addr_q, addr_d, end_addr_q, end_addr_d; //End addr is last to access
-reg [6:0] len_q, len_d;//temp variable to compute end_addr from addr
+reg [ADDR_BIT_COUNT - 1:0] addr_q, addr_d, end_addr_q, end_addr_d; //End addr is last to access
+reg [ADDR_BIT_COUNT - 1:0] len_q, len_d;//temp variable to compute end_addr from addr
 
 always @(*) begin
 	state_d    = state_q;
@@ -79,8 +89,8 @@ always @(*) begin
 		end
 		GET_ADDR: begin
 			if(ser_new_rx_data) begin
-				addr_d     = ser_rx_data * 8;
-				end_addr_d = ser_rx_data + len_q * 8;
+				addr_d     = ser_rx_data * WORD_SIZE;//{ser_rx_data, 3'b0}; //ser_rx_data * WORD_SIZE; 
+				end_addr_d = addr_d + len_q * WORD_SIZE;//{len_q, 3'b0}; //len_q * WORD_SIZE;
 				if(write_q) begin
 					rx_busy_d = 1;
 					state_d = RECEIVE;
@@ -92,24 +102,24 @@ always @(*) begin
 		end
 		RECEIVE: begin
 			if(ser_new_rx_data) begin
-				rx_arr_d[addr_q+:8] = ser_rx_data;//TODO, might need reg
+				rx_arr_d[addr_q+:WORD_SIZE] = ser_rx_data;//TODO, might need reg
 				if(addr_q == end_addr_q) begin
 					new_rx_d  = 1;
 					rx_busy_d = 0;
 					state_d   = IDLE;
 				end
-				addr_d = addr_d + 8;
+				addr_d = addr_q + WORD_SIZE;
 			end
 		end
 		SEND: begin
 			if(~ser_tx_busy) begin
-				ser_tx_data_d = tx_arr[addr_q+:8];
+				ser_tx_data_d = tx_arr[addr_q+:WORD_SIZE];
 				ser_new_tx_data_d = 1;
 				if(addr_q == end_addr_q) begin
 					tx_busy_d = 0;
 					state_d = IDLE;
 				end
-				addr_d = addr_d + 8;
+				addr_d = addr_q + WORD_SIZE;
 			end
 		end
 		default: state_d = IDLE;
