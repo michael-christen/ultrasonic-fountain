@@ -29,8 +29,8 @@ module mojo_top(
 	 input  ext_ss,   //40
 	 input  ext_sck, //41
 	 
-	 input echo, //ultrasonic received dur.
-	 output trigger //ultrasonic start
+	 input [NUM_ULTRASONICS-1:0] echo, //ultrasonic received dur.
+	 output [NUM_ULTRASONICS-1:0] trigger //ultrasonic start
     );
 
 wire rst = ~rst_n; // make reset active high
@@ -40,35 +40,44 @@ assign avr_rx = 1'bz;
 assign spi_channel = 4'bzzzz;
 assign ext_miso = 1'bz;
 
-//Setup hcsr04
-wire measure_dist;
-wire [15:0] dist;
-assign measure_dist = 1'b1;
-wire dist_valid;
+
+//Setup clock
 wire clk_10us;
 clk_divider #(.DIV(500)) div_clk10us(
 	 .clk(clk),
 	 .rst(rst),
 	 .div_clk(clk_10us));
-hcsr04 #(
-		.TRIGGER_DURATION(1),
-		.MAX_COUNT(3800)
-	) ultrasonic(
-	 .clk(clk),
-	 .tclk(clk_10us),
-	 .rst(rst),
-	 .measure(measure_dist),
-	 .echo(echo),
-	 .ticks(dist),
-	 .valid(dist_valid),
-	 .trigger(trigger));
+//Setup hcsr04s
+wire measure_dist;
+assign measure_dist = 1'b1;
+parameter NUM_ULTRASONICS = 9;
+//Each distance takes 16 bits
+wire [NUM_ULTRASONICS * 16 -1:0] us_dists;
+wire [NUM_ULTRASONICS - 1: 0] us_dists_valid;
+genvar i;
+generate
+for (i = 0; i < NUM_ULTRASONICS; i=i+1) begin: us_gen_loop
+    hcsr04 #(
+   	 .TRIGGER_DURATION(1),
+   	 .MAX_COUNT(3800)
+    ) ultrasonic(
+   	 .clk(clk),
+   	 .tclk(clk_10us),
+   	 .rst(rst),
+   	 .measure(measure_dist),
+   	 .echo(echo[i]),
+   	 .ticks(us_dists[16*i+16 - 1: 16*i]),
+   	 .valid(us_dists_valid[i]),
+   	 .trigger(trigger[i]));
+end
+endgenerate
 
 //Setup comm protocol
 localparam SERIAL_BAUD_RATE=9600;
 localparam ADDR_SPACE = 256;
 wire [8*ADDR_SPACE -1:0] mojo_com_rx_arr;
 wire [8*ADDR_SPACE -1:0] mojo_com_tx_arr;
-assign mojo_com_tx_arr = {2008'd0,8'h01,8'hde,8'had,8'hbe,8'hef};
+assign mojo_com_tx_arr = {8'hde,8'had,8'hbe,8'hef, us_dists};
 wire mojo_com_rx_busy, mojo_com_new_rx, mojo_com_tx_busy;
 mojo_com #(
 	.SERIAL_BAUD_RATE(SERIAL_BAUD_RATE))
