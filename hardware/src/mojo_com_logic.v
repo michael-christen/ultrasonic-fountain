@@ -45,11 +45,12 @@ wire [WORD_SIZE-1:0] ser_rx_data;
 wire ser_new_rx_data;
 
 //FSM setup
-localparam STATE_SIZE = 2;
+localparam STATE_SIZE = 3;
 localparam 	IDLE 	= 0,
 			GET_ADDR = 1,
 			RECEIVE = 2,
-			SEND	= 3;	
+			SEND	= 3,
+			SEND_WAIT = 4;	
 reg [STATE_SIZE - 1:0] state_d, state_q;
 
 //FSM inputs and parameters
@@ -118,9 +119,14 @@ always @(*) begin
 				if(addr_q == end_addr_q) begin
 					tx_busy_d = 0;
 					state_d = IDLE;
+				end else begin
+					state_d = SEND_WAIT;
 				end
 				addr_d = addr_q + WORD_SIZE;
 			end
+		end
+		SEND_WAIT: begin
+			state_d = SEND;
 		end
 		default: state_d = IDLE;
 	endcase
