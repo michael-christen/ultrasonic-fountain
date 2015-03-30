@@ -39,7 +39,7 @@ assign spi_miso = 1'bz;
 assign avr_rx = 1'bz;
 assign spi_channel = 4'bzzzz;
 assign ext_miso = 1'bz;
-
+assign ext_tx = 1'bz;
 
 //Setup clock
 wire clk_10us;
@@ -73,19 +73,23 @@ end
 endgenerate
 
 //Setup comm protocol
-localparam SERIAL_BAUD_RATE=9600;
-localparam ADDR_SPACE = 256;
+localparam ADDR_SPACE = 64;
 wire [8*ADDR_SPACE -1:0] mojo_com_rx_arr;
 wire [8*ADDR_SPACE -1:0] mojo_com_tx_arr;
-assign mojo_com_tx_arr = {8'hde,8'had,8'hbe,8'hef, us_dists};
+//assign mojo_com_tx_arr = {8'hde,8'had,8'hbe,8'hef, us_dists};
+assign mojo_com_tx_arr = {480'b0,8'hde,8'had,8'hbe,8'hef};
 wire mojo_com_rx_busy, mojo_com_new_rx, mojo_com_tx_busy;
 mojo_com #(
-	.SERIAL_BAUD_RATE(SERIAL_BAUD_RATE))
+	.ADDR_SPACE(ADDR_SPACE))
  com_unit(
 	.clk(clk),
 	.rst(rst),
-	.tx(ext_tx),
-	.rx(ext_rx),
+	//SPI wires
+	.ss(ext_ss),
+	.sck(ext_sck),
+	.mosi(ext_mosi),
+	.miso(ext_miso),
+	//Interface wires
 	.rx_arr(mojo_com_rx_arr),
 	.rx_busy(mojo_com_rx_busy),
 	.new_rx(mojo_com_new_rx),
