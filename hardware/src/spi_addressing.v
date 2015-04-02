@@ -20,8 +20,20 @@ module spi_addressing (
 wire spi_done;
 wire [7:0] spi_dout;
 wire frame_start, frame_end;
-
 wire spi_miso_m;
+spi_slave spi_slave (
+    .clk(clk),
+    .rst(n_rdy),
+    .ss(spi_ss),
+    .mosi(spi_mosi),
+    .miso(spi_miso_m),
+    .sck(spi_sck),
+    .done(spi_done),
+    .din(read_value),
+    .dout(spi_dout),
+    .frame_start(frame_start),
+    .frame_end(frame_end)
+);
 
 localparam STATE_SIZE = 2;
 localparam IDLE = 0,

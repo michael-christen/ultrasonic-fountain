@@ -18,7 +18,6 @@ const int chipSelectPin = 7;
 void mojoComsSetup() {
 	  // start the SPI library:
 	  SPI.begin();
-	  SPI.setDataMode(SPI_MODE0);
 	  // initalize the  data ready and chip select pins:
 	  pinMode(chipSelectPin, OUTPUT);
 	  digitalWrite(chipSelectPin, HIGH);
