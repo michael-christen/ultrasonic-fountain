@@ -38,7 +38,7 @@ wire rst = ~rst_n; // make reset active high
 assign spi_miso = 1'bz;
 assign avr_rx = 1'bz;
 assign spi_channel = 4'bzzzz;
-assign ext_miso = 1'bz;
+//assign ext_miso = 1'bz;
 assign ext_tx = 1'bz;
 
 //Setup clock

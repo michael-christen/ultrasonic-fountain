@@ -1,4 +1,8 @@
-/*
+/*		Ard.	Mojo
+ * SS	7		40
+ * MOSI	11		34	
+ * MISO	12		35
+ * SCK	13		41
  */
 #include <SPI.h>
 #include "mojo-coms.h"

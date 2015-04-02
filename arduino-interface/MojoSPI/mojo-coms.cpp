@@ -18,8 +18,10 @@ const int chipSelectPin = 7;
 void mojoComsSetup() {
 	  // start the SPI library:
 	  SPI.begin();
+	  SPI.setDataMode(SPI_MODE0);
 	  // initalize the  data ready and chip select pins:
 	  pinMode(chipSelectPin, OUTPUT);
+	  digitalWrite(chipSelectPin, HIGH);
 }
 
 void send_txn_command(bool write, uint8_t addr, uint8_t n) {
@@ -34,9 +36,7 @@ void read_from_mojo(uint8_t addr, uint8_t *buf, uint8_t n) {
 	send_txn_command(false,addr,n);
 	uint8_t i = 0;
 	while(i < n) {
-		if(Serial.available()){
-			buf[i++] = SPI.transfer(0xff);
-		}
+		buf[i++] = SPI.transfer(0xff);
 	}
 	digitalWrite(chipSelectPin, HIGH);
 }
