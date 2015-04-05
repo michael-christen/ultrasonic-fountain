@@ -77,7 +77,7 @@ localparam ADDR_SPACE = 64;
 wire [8*ADDR_SPACE -1:0] mojo_com_rx_arr;
 wire [8*ADDR_SPACE -1:0] mojo_com_tx_arr;
 //assign mojo_com_tx_arr = {8'hde,8'had,8'hbe,8'hef, us_dists};
-assign mojo_com_tx_arr = {480'b0,8'hde,8'had,8'hbe,8'hef};
+assign mojo_com_tx_arr = {300'b0,8'hde,8'had,8'hbe,8'hef, us_dists[15:0]};
 wire mojo_com_rx_busy, mojo_com_new_rx, mojo_com_tx_busy;
 mojo_com #(
 	.ADDR_SPACE(ADDR_SPACE))
